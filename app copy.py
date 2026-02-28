@@ -87,28 +87,62 @@ elif page == "Machine Learning Model Details":
     st.write("---")
 
     st.subheader("1. Problem Type")
-    st.write("The dataset consists of numerical (tabular) data and represents a regression problem because the goal is to predict a continuous target variable (RH for UCI and PM2.5 for Bangkok). Therefore, regression algorithms were selected.")
+    st.write("The dataset consists of numerical (tabular) data and represents a regression problem because the goal is to predict continuous values such as Relative Humidity (RH). Therefore, regression algorithms were selected.")
 
-    st.subheader("2. Algorithms Used in the Ensemble")
+    st.subheader("2. Reason for Choosing an Ensemble Model")
+    st.write("An Ensemble Model combines predictions from multiple models to reduce error and improve accuracy.")
+    st.write("Advantages of Ensemble:")
+    st.write("- Reduces model variance")
+    st.write("- Lowers the risk of overfitting")
+    st.write("- Improves prediction stability")
+    st.write("This project uses a Voting Regressor, which averages predictions from multiple models.")
+
+    st.subheader("3. Algorithms Used in the Ensemble")
     st.write("**1) Random Forest Regressor**")
-    st.write("- Tree-based model")
-    st.write("- Uses multiple decision trees")
-    st.write("- Reduces overfitting through random sampling")
-    st.write("- Suitable for nonlinear relationships")
+    st.write("Random Forest is an ensemble learning technique based on the concept of Bagging (Bootstrap Aggregating).")
+    st.write("**How it works:**")
+    st.write("- Random subsets of the dataset are created using bootstrap sampling.")
+    st.write("- A decision tree is trained on each subset.")
+    st.write("- Each tree produces a prediction.")
+    st.write("- The final prediction (for regression) is the average of all tree predictions.")
+    st.write("**Advantages:**")
+    st.write("- Reduces variance")
+    st.write("- Minimizes overfitting")
+    st.write("- Handles nonlinear relationships effectively")
+    st.write("- Robust to noise and outliers")
     st.write("**Reference:**")
     st.write("- Breiman, L. (2001). Random Forests. Machine Learning.")
 
     st.write("**2) Support Vector Regressor (SVR)**")
-    st.write("- Based on Support Vector Machine concepts")
-    st.write("- Handles complex relationships using kernel functions")
-    st.write("- Suitable for complex data patterns")
+    st.write("Support Vector Regression (SVR) is derived from the Support Vector Machine (SVM) algorithm.")
+    st.write("**Core Idea:**")
+    st.write("SVR attempts to find a function that fits the data within a tolerance margin (ε).")
+    st.write("**Objective:**")
+    st.write("- Minimize:")
+    st.latex(r"\min_{w, b} \frac{1}{2} \|w\|^2")
+    st.write("- Subject to:")
+    st.latex(r"|y_i - (w \cdot x_i + b)| \le \epsilon")
+    st.write("**Key Characteristics:**")
+    st.write("- Uses kernel functions (e.g., RBF) to handle nonlinear data.")
+    st.write("- Maximizes margin while controlling model complexity.")
+    st.write("- Performs well on medium-sized datasets.")
     st.write("**Reference:**")
     st.write("Cortes, C., & Vapnik, V. (1995). Support Vector Machines.")
 
     st.write("**3) K-Nearest Neighbors (KNN)**")
-    st.write("- Predicts based on the average of nearest neighbors")
+    st.write("KNN is a non-parametric learning algorithm.")
+    st.write("**How it works:**")
+    st.write("- Computes the distance between a new sample and all training samples.")
+    st.write("- Selects the K closest neighbors.")
+    st.write("- Returns the average value of those neighbors.")
+    st.write("Distance metric used:")
+    st.write("- Euclidean Distance")
+    st.write("**Advantages:**")
+    st.write("- Simple and intuitive")
     st.write("- No assumption about data distribution")
-    st.write("- Works well when data has spatial similarity")
+    st.write("**Disadvantages:**")
+    st.write("- Computationally expensive for large datasets")
+    st.write("- Sensitive to feature scaling")
     st.write("**Reference:**")
     st.write("- Cover, T., & Hart, P. (1967). Nearest Neighbor Pattern Classification. IEEE Transactions on Information Theory.")
 
@@ -161,6 +195,20 @@ elif page == "Machine Learning Model Details":
     st.write("No explicit outlier removal was applied because:")
     st.write("- Ensemble methods are robust to noise")
     st.write("- Removing outliers may remove valuable extreme environmental conditions")
+
+    st.write("---")
+
+    st.subheader("Model Evaluation Metrics")
+    st.write("Three regression metrics were used:")
+    st.write("**1) Mean Squared Error (MSE)**")
+    st.latex(r"MSE = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2")
+    st.write("Penalizes large errors more heavily.")
+    st.write("**2) Mean Absolute Error (MAE)**")
+    st.latex(r"MAE = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|")
+    st.write("Measures average absolute error.")
+    st.write("**3) R² Score**")
+    st.latex(r"R^2 = 1 - \frac{SS_{res}}{SS_{tot}}")
+    st.write("Measures how well the model explains variance.")
 
     st.write("---")
 
@@ -243,7 +291,7 @@ elif page == "Neural Network Model Details":
     st.write("- Training MAE: 10.0224")
     st.write("- Validation Loss (MSE): 326.9261")
     st.write("- Validation MAE: 12.3531")
-
+    
 elif page == "Test Machine Learning Model":
 
     st.header("Test Machine Learning Model")
@@ -323,7 +371,7 @@ elif page == "Test Neural Network Model":
     # AirQualityUCI
     if dataset_choice == "AirQualityUCI Dataset":
 
-        st.subheader("Enter UCI Air Quality Parameters")
+        st.subheader("Enter Bangkok Air Quality Parameters")
 
         col1, col2 = st.columns(2)
 
