@@ -4,6 +4,30 @@ import pandas as pd
 import numpy as np
 from tensorflow.keras.models import load_model
 
+@st.cache_resource
+def load_models():
+
+    # Dataset 1
+    with open("models/IS_AirQuality_Dataset1/ensemble_model.pkl", "rb") as f:
+        ensemble1 = pickle.load(f)
+
+    nn1 = load_model("models/IS_AirQuality_Dataset1/nn_model.keras", compile=False)
+
+    with open("models/IS_AirQuality_Dataset1/scaler.pkl", "rb") as f:
+        scaler1 = pickle.load(f)
+
+    # Dataset 2
+    with open("models/IS_BKKAirQuality_Dataset2/model1_ensemble_bkk.pkl", "rb") as f:
+        ensemble2 = pickle.load(f)
+
+    nn2 = load_model("models/IS_BKKAirQuality_Dataset2/nn_bkk.keras", compile=False)
+
+    with open("models/IS_BKKAirQuality_Dataset2/scaler_bkk.pkl", "rb") as f:
+        scaler2 = pickle.load(f)
+
+    return ensemble1, nn1, scaler1, ensemble2, nn2, scaler2
+
+ensemble1, nn1, scaler1, ensemble2, nn2, scaler2 = load_models()
 st.sidebar.title("Main Menu")
 page = st.sidebar.selectbox("Select Page", ["Datasets Info", "Machine Learning Model Details","Neural Network Model Details", "Test Machine Learning Model", "Test Neural Network Model"])
 
@@ -132,9 +156,134 @@ elif page == "Neural Network Model Details":
     st.write("For the Bangkok dataset, EarlyStopping was applied to reduce overfitting by stopping training when validation loss no longer decreases.")
 
 elif page == "Test Machine Learning Model":
-    st.header("")
-    st.write("")
+
+    st.header("Test Machine Learning Model")
+    st.write("---")
+
+    dataset_choice = st.selectbox(
+        "Select Dataset",
+        ["AirQualityUCI Dataset", "Bangkok Air Quality Dataset"]
+    )
+
+    # AirQualityUCI
+    if dataset_choice == "AirQualityUCI Dataset":
+
+        st.subheader("Enter UCI Air Quality Parameters")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            co = st.number_input("CO(GT)", value=2.6)
+            nmhc = st.number_input("NMHC(GT)", value=150.0)
+            c6h6 = st.number_input("C6H6(GT)", value=11.9)
+            nox = st.number_input("NOx(GT)", value=166.0)
+            no2 = st.number_input("NO2(GT)", value=113.0)
+            temp = st.number_input("Temperature (T)", value=13.6)
+
+        with col2:
+            s1 = st.number_input("PT08.S1(CO)", value=1360.0)
+            s2 = st.number_input("PT08.S2(NMHC)", value=1046.0)
+            s3 = st.number_input("PT08.S3(NOx)", value=1056.0)
+            s4 = st.number_input("PT08.S4(NO2)", value=1692.0)
+            s5 = st.number_input("PT08.S5(O3)", value=1268.0)
+
+        if st.button("Predict Relative Humidity (RH) (ML - UCI)"):
+
+            features = np.array([[co, s1, nmhc, c6h6, s2,
+                                  nox, s3, no2, s4, s5, temp]])
+
+            scaled = scaler1.transform(features)
+            prediction = ensemble1.predict(scaled)
+
+            st.success(f"Predicted RH: {prediction[0]:.2f} %")
+
+    # Bangkok
+    else:
+
+        st.subheader("Enter Bangkok Air Quality Parameters")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            pm10 = st.number_input("PM10", value=40.0)
+            o3 = st.number_input("O3", value=20.0)
+
+        with col2:
+            no2 = st.number_input("NO2", value=15.0)
+            so2 = st.number_input("SO2", value=5.0)
+            co = st.number_input("CO", value=0.8)
+
+        if st.button("Predict PM2.5 in Bangkok (ML - Bangkok)"):
+
+            features = np.array([[pm10, o3, no2, so2, co]])
+
+            scaled = scaler2.transform(features)
+            prediction = ensemble2.predict(scaled)
+
+            st.success(f"Predicted PM2.5: {prediction[0]:.2f} µg/m³")
 
 elif page == "Test Neural Network Model":
-    st.header("")
-    st.write("")
+    st.header("Test Neural Network Model")
+    st.write("---")
+
+    dataset_choice = st.selectbox(
+    "Select Dataset",
+    ["AirQualityUCI Dataset", "Bangkok Air Quality Dataset"]
+    )
+
+    # AirQualityUCI
+    if dataset_choice == "AirQualityUCI Dataset":
+
+        st.subheader("Enter Bangkok Air Quality Parameters")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            co = st.number_input("CO(GT)", value=2.6, key="nn1")
+            nmhc = st.number_input("NMHC(GT)", value=150.0, key="nn2")
+            c6h6 = st.number_input("C6H6(GT)", value=11.9, key="nn3")
+            nox = st.number_input("NOx(GT)", value=166.0, key="nn4")
+            no2 = st.number_input("NO2(GT)", value=113.0, key="nn5")
+            temp = st.number_input("Temperature (T)", value=13.6, key="nn6")
+
+        with col2:
+            s1 = st.number_input("PT08.S1(CO)", value=1360.0, key="nn7")
+            s2 = st.number_input("PT08.S2(NMHC)", value=1046.0, key="nn8")
+            s3 = st.number_input("PT08.S3(NOx)", value=1056.0, key="nn9")
+            s4 = st.number_input("PT08.S4(NO2)", value=1692.0, key="nn10")
+            s5 = st.number_input("PT08.S5(O3)", value=1268.0, key="nn11")
+
+        if st.button("Predict Relative Humidity (RH) (NN - UCI)"):
+
+            features = np.array([[co, s1, nmhc, c6h6, s2,
+                                  nox, s3, no2, s4, s5, temp]])
+
+            scaled = scaler1.transform(features)
+            prediction = nn1.predict(scaled).flatten()
+
+            st.success(f"Predicted RH: {prediction[0]:.2f} %")
+
+    # Bangkok
+    else:
+
+        st.subheader("Enter Bangkok Air Quality Parameters")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            pm10 = st.number_input("PM10", value=40.0, key="bnn2")
+            o3 = st.number_input("O3", value=20.0, key="bnn3")
+
+        with col2:
+            no2 = st.number_input("NO2", value=15.0, key="bnn4")
+            so2 = st.number_input("SO2", value=5.0, key="bnn5")
+            co = st.number_input("CO", value=0.8, key="bnn6")
+
+        if st.button("Predict PM2.5 in Bangkok (NN - Bangkok)"):
+
+            features = np.array([[pm10, o3, no2, so2, co]])
+
+            scaled = scaler2.transform(features)
+            prediction = nn2.predict(scaled).flatten()
+
+            st.success(f"Predicted PM2.5: {prediction[0]:.2f} µg/m³")
