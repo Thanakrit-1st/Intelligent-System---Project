@@ -3,31 +3,48 @@ import pickle
 import pandas as pd
 import numpy as np
 from tensorflow.keras.models import load_model
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL1_PATH = os.path.join(BASE_DIR, "models", "IS_AirQuality_Dataset1", "ensemble_model.pkl")
+NN1_PATH = os.path.join(BASE_DIR, "models", "IS_AirQuality_Dataset1", "nn_model.keras")
+SCALER1_PATH = os.path.join(BASE_DIR, "models", "IS_AirQuality_Dataset1", "scaler.pkl")
+
+MODEL2_PATH = os.path.join(BASE_DIR, "models", "IS_BKKAirQuality_Dataset2", "model1_ensemble_bkk.pkl")
+NN2_PATH = os.path.join(BASE_DIR, "models", "IS_BKKAirQuality_Dataset2", "nn_bkk.keras")
+SCALER2_PATH = os.path.join(BASE_DIR, "models", "IS_BKKAirQuality_Dataset2", "scaler_bkk.pkl")
 
 @st.cache_resource
 def load_models():
+    try:
+        with open(MODEL1_PATH, "rb") as f:
+            ensemble_model = pickle.load(f)
 
-    # Dataset 1
-    with open("models/IS_AirQuality_Dataset1/ensemble_model.pkl", "rb") as f:
-        ensemble1 = pickle.load(f)
+        nn_model = load_model(NN1_PATH)
 
-    nn1 = load_model("models/IS_AirQuality_Dataset1/nn_model.keras", compile=False)
+        with open(SCALER1_PATH, "rb") as f:
+            scaler = pickle.load(f)
 
-    with open("models/IS_AirQuality_Dataset1/scaler.pkl", "rb") as f:
-        scaler1 = pickle.load(f)
+        with open(MODEL2_PATH, "rb") as f:
+            ensemble_bkk = pickle.load(f)
 
-    # Dataset 2
-    with open("models/IS_BKKAirQuality_Dataset2/model1_ensemble_bkk.pkl", "rb") as f:
-        ensemble2 = pickle.load(f)
+        nn_bkk = load_model(NN2_PATH)
 
-    nn2 = load_model("models/IS_BKKAirQuality_Dataset2/nn_bkk.keras", compile=False)
+        with open(SCALER2_PATH, "rb") as f:
+            scaler_bkk = pickle.load(f)
 
-    with open("models/IS_BKKAirQuality_Dataset2/scaler_bkk.pkl", "rb") as f:
-        scaler2 = pickle.load(f)
+        return ensemble_model, nn_model, scaler, ensemble_bkk, nn_bkk, scaler_bkk
 
-    return ensemble1, nn1, scaler1, ensemble2, nn2, scaler2
+    except Exception as e:
+        st.error(f"Error loading models: {e}")
+        return None, None, None, None, None, None
+    
+ensemble_model, nn_model, scaler, ensemble_bkk, nn_bkk, scaler_bkk = load_models()
 
-ensemble1, nn1, scaler1, ensemble2, nn2, scaler2 = load_models()
+if ensemble_model is None:
+    st.stop()
+
 st.sidebar.title("Main Menu")
 page = st.sidebar.selectbox("Select Page", ["Datasets Info", "Machine Learning Model Details","Neural Network Model Details", "Test Machine Learning Model", "Test Neural Network Model"])
 
@@ -164,7 +181,37 @@ elif page == "Machine Learning Model Details":
 
     st.write("---")
 
-    st.subheader("Model Performance Results")
+    st.header("Hyperparameters")
+
+    st.subheader("AirQualityUCI Dataset")
+
+    st.write("**Random Forest Hyperparameters:**")
+    st.write("- n_estimators = 100")
+
+    st.write("**SVR Hyperparameters:**")
+    st.write("- kernel = 'rbf'")
+    st.write("- C = 1.0")
+    st.write("- epsilon = 0.1")
+
+    st.write("**KNN Hyperparameters:**")
+    st.write("- n_neighbors = 5")
+    st.write("- weights = 'uniform'")
+
+    st.subheader("Bangkok Air Quality Dataset")
+
+    st.write("**Random Forest Hyperparameters:**")
+    st.write("- n_estimators = 100")
+    st.write("- random_state = 42")
+
+    st.write("**SVR Hyperparameters:**")
+    st.write("- kernel = 'rbf'")
+
+    st.write("**KNN Hyperparameters:**")
+    st.write("- n_neighbors = 5")
+
+    st.write("---")
+
+    st.header("Model Performance Results")
     st.write("**AirQualityUCI Dataset:**")
     st.write("- R²: 0.9144")
     st.write("**Bangkok Air Quality Dataset:**")
@@ -232,6 +279,28 @@ elif page == "Neural Network Model Details":
 
     st.write("---")
 
+    st.header("Hyperparameters")
+
+    st.subheader("AirQualityUCI Dataset")
+
+    st.write("Optimizer: Adam")
+    st.write("Loss: MSE")
+    st.write("Epochs: 50")
+    st.write("Batch size: 32")
+    st.write("Validation split: 0.2")
+
+    st.subheader("Bangkok Air Quality Dataset")
+
+    st.write("Architecture: 128-64-32-16-1 (ReLU)")
+    st.write("Optimizer: Adam")
+    st.write("Loss: MSE")
+    st.write("Epochs: 100")
+    st.write("Batch size: 32")
+    st.write("Validation split: 0.2")
+    st.write("EarlyStopping: patience=10, restore_best_weights=True")
+
+    st.write("---")
+
     st.subheader("Model Performance Results")
     st.write("**AirQualityUCI Dataset:**")
     st.write("- Training Loss (MSE): 15.3983")
@@ -262,11 +331,11 @@ elif page == "Test Machine Learning Model":
         col1, col2 = st.columns(2)
 
         with col1:
-            co = st.number_input("CO(GT)", value=2.6)
-            nmhc = st.number_input("NMHC(GT)", value=150.0)
-            c6h6 = st.number_input("C6H6(GT)", value=11.9)
-            nox = st.number_input("NOx(GT)", value=166.0)
-            no2 = st.number_input("NO2(GT)", value=113.0)
+            co = st.number_input("CO(GT)", min_value=0.0, value=2.6)
+            nmhc = st.number_input("NMHC(GT)", min_value=0.0, value=150.0)
+            c6h6 = st.number_input("C6H6(GT)", min_value=0.0, value=11.9)
+            nox = st.number_input("NOx(GT)", min_value=0.0, value=166.0)
+            no2 = st.number_input("NO2(GT)", min_value=0.0, value=113.0)
             temp = st.number_input("Temperature (T)", value=13.6)
 
         with col2:
@@ -281,8 +350,8 @@ elif page == "Test Machine Learning Model":
             features = np.array([[co, s1, nmhc, c6h6, s2,
                                   nox, s3, no2, s4, s5, temp]])
 
-            scaled = scaler1.transform(features)
-            prediction = ensemble1.predict(scaled)
+            scaled = scaler.transform(features)
+            prediction = ensemble_model.predict(scaled)
 
             st.success(f"Predicted RH: {prediction[0]:.2f} %")
 
@@ -294,20 +363,20 @@ elif page == "Test Machine Learning Model":
         col1, col2 = st.columns(2)
 
         with col1:
-            pm10 = st.number_input("PM10", value=40.0)
-            o3 = st.number_input("O3", value=20.0)
+            pm10 = st.number_input("PM10 (µg/m³)", min_value=0.0, value=40.0)
+            o3 = st.number_input("O3 (ppb)", min_value=0.0, value=20.0)
 
         with col2:
-            no2 = st.number_input("NO2", value=15.0)
-            so2 = st.number_input("SO2", value=5.0)
-            co = st.number_input("CO", value=0.8)
+            no2 = st.number_input("NO2 (ppb)", min_value=0.0, value=15.0)
+            so2 = st.number_input("SO2 (ppb)", min_value=0.0, value=5.0)
+            co = st.number_input("CO (ppm)", min_value=0.0, value=0.8)
 
         if st.button("Predict PM2.5 in Bangkok (ML - Bangkok)"):
 
             features = np.array([[pm10, o3, no2, so2, co]])
 
-            scaled = scaler2.transform(features)
-            prediction = ensemble2.predict(scaled)
+            scaled = scaler_bkk.transform(features)
+            prediction = ensemble_bkk.predict(scaled)
 
             st.success(f"Predicted PM2.5: {prediction[0]:.2f} µg/m³")
 
@@ -328,11 +397,11 @@ elif page == "Test Neural Network Model":
         col1, col2 = st.columns(2)
 
         with col1:
-            co = st.number_input("CO(GT)", value=2.6, key="nn1")
-            nmhc = st.number_input("NMHC(GT)", value=150.0, key="nn2")
-            c6h6 = st.number_input("C6H6(GT)", value=11.9, key="nn3")
-            nox = st.number_input("NOx(GT)", value=166.0, key="nn4")
-            no2 = st.number_input("NO2(GT)", value=113.0, key="nn5")
+            co = st.number_input("CO(GT)", min_value=0.0, value=2.6, key="nn1")
+            nmhc = st.number_input("NMHC(GT)", min_value=0.0, value=150.0, key="nn2")
+            c6h6 = st.number_input("C6H6(GT)", min_value=0.0, value=11.9, key="nn3")
+            nox = st.number_input("NOx(GT)", min_value=0.0, value=166.0, key="nn4")
+            no2 = st.number_input("NO2(GT)", min_value=0.0, value=113.0, key="nn5")
             temp = st.number_input("Temperature (T)", value=13.6, key="nn6")
 
         with col2:
@@ -347,8 +416,8 @@ elif page == "Test Neural Network Model":
             features = np.array([[co, s1, nmhc, c6h6, s2,
                                   nox, s3, no2, s4, s5, temp]])
 
-            scaled = scaler1.transform(features)
-            prediction = nn1.predict(scaled).flatten()
+            scaled = scaler.transform(features)
+            prediction = nn_model.predict(scaled).flatten()
 
             st.success(f"Predicted RH: {prediction[0]:.2f} %")
 
@@ -360,19 +429,19 @@ elif page == "Test Neural Network Model":
         col1, col2 = st.columns(2)
 
         with col1:
-            pm10 = st.number_input("PM10", value=40.0, key="bnn2")
-            o3 = st.number_input("O3", value=20.0, key="bnn3")
+            pm10 = st.number_input("PM10", min_value=0.0, value=40.0, key="bnn2")
+            o3 = st.number_input("O3", min_value=0.0, value=20.0, key="bnn3")
 
         with col2:
-            no2 = st.number_input("NO2", value=15.0, key="bnn4")
-            so2 = st.number_input("SO2", value=5.0, key="bnn5")
-            co = st.number_input("CO", value=0.8, key="bnn6")
+            no2 = st.number_input("NO2", min_value=0.0, value=15.0, key="bnn4")
+            so2 = st.number_input("SO2", min_value=0.0, value=5.0, key="bnn5")
+            co = st.number_input("CO", min_value=0.0, value=0.8, key="bnn6")
 
         if st.button("Predict PM2.5 in Bangkok (NN - Bangkok)"):
 
             features = np.array([[pm10, o3, no2, so2, co]])
 
-            scaled = scaler2.transform(features)
-            prediction = nn2.predict(scaled).flatten()
+            scaled = scaler_bkk.transform(features)
+            prediction = nn_bkk.predict(scaled).flatten()
 
             st.success(f"Predicted PM2.5: {prediction[0]:.2f} µg/m³")
