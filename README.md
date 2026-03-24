@@ -19,4 +19,4 @@ This web application predicts air quality factors using **Machine Learning (Ense
 ## 🛠️ How to Run Locally
 1. Clone the repository:
    ```bash
-   git clone <your-github-link>
+   git clone <https://github.com/Thanakrit-1st/Intelligent-System---Project>
